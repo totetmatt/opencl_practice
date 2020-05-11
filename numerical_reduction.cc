@@ -11,9 +11,9 @@ int main()
                 std::cout << p.getInfo<CL_PLATFORM_NAME>() << std::endl;;
         }
         auto platform = platforms.front();
-
+cl_int err = 0;
         std::vector<cl::Device> devices;
-        platform.getDevices(CL_DEVICE_TYPE_ALL,&devices) ;
+        platform.getDevices(CL_DEVICE_TYPE_GPU,&devices) ;
 
         auto device = devices.front();
         std::ifstream kernelFile("numerical_reduction.cl");
@@ -30,26 +30,29 @@ int main()
         }
         
 
-        cl::Kernel kernel(program,"arrayprocess");
-        auto workGroupSize =  kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
+        cl::Kernel kernel(program,"arrayprocess",&err);
+         std::cout << "e : "<< err << std::endl;
+        auto workGroupSize = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device,&err);
+       
         std::cout << "workGroupSize : " << workGroupSize << std::endl;
         auto numWorkGroups = vec.size() / workGroupSize;
         std::cout << numWorkGroups << std::endl;
-
+std::cout << "e : "<< err << std::endl;
         cl::Buffer buf(context, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_COPY_HOST_PTR, sizeof(int)*vec.size(), vec.data());
         cl::Buffer outBuf(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, sizeof(int) * numWorkGroups);
 
-
+        std::cout << "e : "<< err << std::endl;
         kernel.setArg(0,buf);
         kernel.setArg(1,sizeof(int)* workGroupSize, nullptr);
         kernel.setArg(2,outBuf);
-
+std::cout << "e : "<< err << std::endl;
         std::vector<int> outVec(numWorkGroups);
 
         cl::CommandQueue queue(context,device);
         queue.enqueueNDRangeKernel(kernel,cl::NullRange, cl::NDRange(vec.size()),cl::NDRange(workGroupSize));
         queue.enqueueReadBuffer(outBuf, CL_TRUE,0,sizeof(int)*outVec.size(), outVec.data());
         std::cout << "end" << std::endl;
+                std::cout << "e : "<< err << std::endl;
         for(int i: outVec) {
                 std::cout << i << " " << std::endl;
         }

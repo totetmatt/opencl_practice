@@ -10,7 +10,7 @@ __kernel void arrayprocess(__global int* data, __local int* localData, __global 
 
     for(int i = localSize >> 1; i>0; i >>=1 ) {
         if(localId < i) {
-            localData[localId] += local[localId+i];
+            localData[localId] += localData[localId+i];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
     }
@@ -18,4 +18,3 @@ __kernel void arrayprocess(__global int* data, __local int* localData, __global 
         outData[get_group_id(0)] = localData[0];
     }
 }
-    
